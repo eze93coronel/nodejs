@@ -3,7 +3,10 @@ const Proyectos = require('../models/Proyecto')
  const Tareas = require('../models/Tareas'); 
 
 exports.proyectosHome = async (req,res)=>{
-    const proyectos = await Proyectos.findAll()
+    //console.log( res.locals.usuario)
+    const usuarioId = res.locals.usuario.id;
+    const proyectos = await Proyectos.findAll({where : {usuarioId}});
+
     res.render('index',{
         nombrePagina: 'Proyectos'  ,
         proyectos
@@ -11,7 +14,10 @@ exports.proyectosHome = async (req,res)=>{
 }
 
 exports.formularioProyecto = async (req,res)=>{
-    const proyectos = await Proyectos.findAll()
+
+
+  const usuarioId = res.locals.usuario.id;
+    const proyectos = await Proyectos.findAll({where : {usuarioId}})
 
     res.render('nuevoProyecto',{
         nombrePagina: 'Nuevo Proyecto',
@@ -19,7 +25,10 @@ exports.formularioProyecto = async (req,res)=>{
     })
 }
 exports.nuevoProyecto = async (req,res)=>{
-    const proyectos = await Proyectos.findAll()
+
+
+    const usuarioId = res.locals.usuario.id;
+    const proyectos = await Proyectos.findAll({where : {usuarioId}});
 
     //enviar ala consola lo que  el usuario escriba 
 
@@ -47,19 +56,22 @@ exports.nuevoProyecto = async (req,res)=>{
   else{
       //no ai errores 
       //insertyar en la bd 
-     
-   const proyecto = await Proyectos.create({nombre}); 
+    const usuarioId = res.locals.usuario.id;
+    await Proyectos.create({nombre , usuarioId}); 
    res.redirect('/');
               
    }
 }
 
 exports.proyectoPorUrl = async(req,res,next) =>{
-    const proyectosPromise =   Proyectos.findAll();
+
+    const usuarioId = res.locals.usuario.id;
+    const proyectosPromise =  Proyectos.findAll({where : {usuarioId}});
     
     const proyectoPromise =   Proyectos.findOne({
         where : {
-            url: req.params.url
+            url: req.params.url,
+            
         }
     });
     const [proyectos, proyecto] = await Promise.all([proyectosPromise,proyectoPromise]);
@@ -67,7 +79,8 @@ exports.proyectoPorUrl = async(req,res,next) =>{
    //consultar tareas del proyecto actual 
    const tareas = await Tareas.findAll({
          where:{
-             proyectoId : proyecto.id
+             proyectoId : proyecto.id,
+             usuarioId
          },
        //  include: [
          //    {model : Proyectos}
@@ -87,11 +100,15 @@ exports.proyectoPorUrl = async(req,res,next) =>{
 };
 
  exports.formularioEditar = async (req,res)=>{
-    const proyectosPromise =   Proyectos.findAll();
+    
+    const usuarioId = res.locals.usuario.id;
+
+    const proyectosPromise =  Proyectos.findAll({where : {usuarioId}});
     
     const proyectoPromise =  Proyectos.findOne({
         where : {
-            id : req.params.id
+            id : req.params.id,
+            usuarioId
         }
        
     });
@@ -107,7 +124,9 @@ exports.proyectoPorUrl = async(req,res,next) =>{
     })
  };
  exports.actualizarProyecto = async (req,res)=>{
-    const proyectos = await Proyectos.findAll()
+     
+    const usuarioId = res.locals.usuario.id;
+    const proyectos = await Proyectos.findAll({where : {usuarioId}});
 
     //enviar ala consola lo que  el usuario escriba 
 
@@ -135,7 +154,7 @@ exports.proyectoPorUrl = async(req,res,next) =>{
       //no ai errores 
       //insertyar en la bd 
 
-    const proyecto = await Proyectos.update(
+    await Proyectos.update(
         {nombre:nombre},
         {where:{
             id:req.params.id
@@ -145,46 +164,8 @@ exports.proyectoPorUrl = async(req,res,next) =>{
     res.redirect('/')
               
     }
-}
-exports.actualizarProyecto= async (req,res)=>{
-    const proyectos = await Proyectos.findAll()
+};
 
-    //enviar ala consola lo que  el usuario escriba 
-
-  //  console.log(req.body)
-
-  //validar que tengamos algo en el input 
-  const {nombre} = req.body;
-
-  let errores = [];
-
-  if(!nombre){
-      errores.push({'texto':'Agrega un Nombre AL Proyecto'});
-
-
-  }
-  // si ahi errores 
-  
-  if(errores.length > 0){
-      res.render('nuevoProyecto',{
-          nombrePagina : 'Nuevo Proyecto',
-          errores,
-          proyectos
-      })
-  }
-  else{
-      //no ai errores 
-      //insertyar en la bd 
-     
-   const proyecto = await Proyectos.update(
-       {nombre : nombre},
-       {where : {id: req.params.id}}
-    
-    ); 
-   res.redirect('/');
-              
-   }
-}
 
 exports.eliminarProyecto = async(req,res,next) =>{
     //req,query o params
